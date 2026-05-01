@@ -241,6 +241,19 @@ real *Szk_d;
 real *InvVj_d;
 real shift_buffer_d[MAX1D];
 
+//COALA
+flt* massgrid = NULL;
+flt* massbins = NULL;
+flt* massmeanlog = NULL;
+flt* vecnodes = NULL;
+flt* vecweights = NULL;
+flt* tabflux_v0     = NULL;
+int* ind_tabflux_v0 = NULL;
+flt* tabflux        = NULL;
+int* ind_tabflux    = NULL;
+flt* mat_coeffs_leg = NULL;
+int dim_tabflux;
+
 //Grid variables
 
 int Nx;
@@ -414,3 +427,5 @@ void (*boundary_ymin[NFLUIDS])();
 void (*boundary_ymax[NFLUIDS])();
 void (*boundary_zmin[NFLUIDS])();
 void (*boundary_zmax[NFLUIDS])();
+
+void (*Coala)(real);

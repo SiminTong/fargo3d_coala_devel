@@ -3,6 +3,7 @@ typedef char boolean;
 typedef float real;
 #else
 typedef double real;
+typedef double flt;
 #endif
 typedef struct param Param;
 typedef struct planetary_system PlanetarySystem;

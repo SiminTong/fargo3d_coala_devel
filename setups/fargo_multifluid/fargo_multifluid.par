@@ -14,19 +14,22 @@ Invstokes1		10.0   Inverse of the Stokes number for dust1
 Invstokes2		1.0    Inverse of the Stokes number for dust2
 Invstokes3		0.1    Inverse of the Stokes number for dust3
 
-Epsilon                 1.0    Dust-to-gas mass ratio
+Epsilon         0.01    Dust-to-gas mass ratio
+Rhograin        2.0
+Smin            1.0e-4
+Smax            0.01
 
 ### Planet parameters
 
-PlanetConfig		planets/jupiter.cfg
+PlanetConfig		planets/zero.cfg
 ThicknessSmoothing 	0.6
 Eccentricity		0.0
 IndirectTerm		no
 
 ### Mesh parameters
 
-Nx			384		Number of azimuthal zones
-Ny               	128		Number of Radial zones
+Nx			  1		Number of azimuthal zones
+Ny            32		Number of Radial zones
 
 Xmin		       -3.14159265358979323844
 Xmax			3.14159265358979323844

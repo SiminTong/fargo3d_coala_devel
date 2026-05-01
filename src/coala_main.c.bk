@@ -1,0 +1,302 @@
+//***********************************************************************************
+// Coala code
+// Copyright(C) Maxime Lombart <maxime.lombart@cea.fr>
+// and other code contributors
+// Licensed under CeCILL 2.1 License, see LICENCE for more information
+//***********************************************************************************
+
+#include "coala_precision.h"
+#include "coala_setup.h"
+#include "coala_GQ_legendre_nodes_weights.h"
+#include "coala_init_grid.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <assert.h>
+#include "coala_iterate_coag_k0.h"
+#include "coala_iterate_coag.h"
+
+
+//declare pointers
+flt* massgrid = NULL;
+flt* massbins = NULL;
+flt* massmeanlog = NULL;
+
+flt* vecnodes = NULL;
+flt* vecweights = NULL;
+
+
+int coala_main ()
+{
+
+    switch (kernel){
+    case 0:
+        dthydro = ((flt)1e2);
+        ndthydro = 100;
+        break;
+
+    case 1:
+        dthydro = ((flt)1e-2);
+        ndthydro = 300;
+        break;
+
+    default:
+        printf("issue in choosing kernel, setup.h \n");
+        exit(-1);
+    }
+
+
+    FILE *fp;
+
+
+    // path for data
+    init_path_files(nbins,kpol,kernel,path_data);
+    strcpy(path_massgrid,path_data);
+    strcat(path_massgrid,"massgrid.txt");
+    strcpy(path_massbins,path_data);
+    strcat(path_massbins,"massbins.txt");
+    strcpy(path_log,path_data);
+    strcat(path_log,"log.txt");
+    strcpy(path_gtend_massmeanlog,path_data);
+    strcat(path_gtend_massmeanlog,"gtend_massmeanlog.txt");
+    strcpy(path_massmeanlog,path_data);
+    strcat(path_massmeanlog,"massmeanlog.txt");
+    strcpy(path_gt0_massmeanlog,path_data);
+    strcat(path_gt0_massmeanlog,"gt0_massmeanlog.txt");
+    strcpy(path_gij_t0,path_data);
+    strcat(path_gij_t0,"gij_t0.txt");
+    strcpy(path_gij_tend,path_data);
+    strcat(path_gij_tend,"gij_tend.txt");
+    strcpy(path_gij,path_data);
+    strcat(path_gij,"gij.txt");
+    strcpy(path_time,path_data);
+    strcat(path_time,"time.txt");
+
+
+
+
+    // Using time point and system_clock
+    clock_t start_tot, end_tot;
+    clock_t start, end;
+    flt elapsed_seconds;
+
+    printf("\033[96m>>>Setup<<<\033[0m \n");
+
+    if (sizeof((flt)1)==sizeof((float)1)){
+        printf("Precision scheme = simple precision \n");
+    }else if(sizeof((flt)1)==sizeof((double)1)){
+        printf("Precision scheme = double precision \n");
+    }else{
+        printf("Error in type of flt ! \n");
+        exit(-1);
+    }
+
+    if (sizeof((flt)1)==sizeof((float)1)){
+        printf("Precision tabflux tabintflux GQ = simple precision\n");
+    }else if (sizeof((flt)1)==sizeof((double)1)){
+        printf("Precision tabflux tabintflux GQ = double precision\n");
+    }else{
+        printf("Error in type of flt ! \n");
+        exit(-1);
+    }
+    
+
+
+    switch (kernel) {
+        case 0: //kconst
+            printf("Kernel -> Kconst \n");
+            break;
+        case 1: //kadd
+            printf("Kernel -> Kadd \n");
+            break;
+        case 2: //kmul
+            printf("Kernel -> Kmul \n");
+            break;
+        
+        default:
+            printf("Need to chosse kernel in setup. \n");
+            exit(-1);
+    }
+        
+        
+    printf("Nbins = %d \n",nbins);
+    printf("Kpol = %d \n",kpol);
+    printf("NdtHydro = %d \n", ndthydro);
+    printf("dtHydro = %f \n", dthydro);
+    printf("MassMin = %f \n", massmin);
+    printf("MassMax = %f \n", massmax);
+    printf("nb Gauss points = %d \n",Q);
+   
+    printf("\n");
+
+
+
+    //for GQ, allocate arrays
+    vecnodes   = malloc(Q*sizeof(flt));
+    vecweights = malloc(Q*sizeof(flt));
+
+    GQLeg_nodes(Q,vecnodes);
+    GQLeg_weights(Q,vecweights);
+
+    //log simu
+    if (save){
+        fp = fopen(path_log,"w");
+        
+        if (sizeof((flt)1)==sizeof((float)1)){
+            fprintf(fp,"Precision scheme = simple precision \n");
+        }else if(sizeof((flt)1)==sizeof((double)1)){
+            fprintf(fp,"Precision scheme = double precision \n");
+        }else{
+            printf("Error in logfile of flt ! \n");
+            exit(-1);
+        }
+
+        if (sizeof((flt)1)==sizeof((float)1)){
+            fprintf(fp,"Precision tabflux tabintflux GQ = simple precision\n");
+        }else if (sizeof((flt)1)==sizeof((double)1)){
+            fprintf(fp,"Precision tabflux tabintflux GQ = double precision\n");
+        }else{
+            printf("Error in type of flt ! \n");
+            exit(-1);
+        }
+
+        switch (kernel) {
+            case 0: //kconst
+                fprintf(fp,"Kernel -> Kconst \n");
+                break;
+            case 1: //kadd
+                fprintf(fp,"Kernel -> Kadd \n");
+                break;
+            case 2: //kmul
+                fprintf(fp,"Kernel -> Kmul \n");
+                break;
+            
+            default:
+                printf("Need to chosse kernel in setup. \n");
+                exit(-1);
+        }
+        fprintf(fp,"Nbins = %d \n",nbins);
+        fprintf(fp,"kpol = %d \n",kpol);
+        fprintf(fp,"ndthydro = %d \n",ndthydro);
+        fprintf(fp,"dtHydro = %.15e \n", dthydro);
+        fprintf(fp,"MassMin = %.2e \n", massmin);
+        fprintf(fp,"MassMax = %.2e \n", massmax);
+        fprintf(fp,"nb Gauss points = %d \n",Q);
+        fclose(fp);
+
+    
+    }
+    
+    start_tot = clock();
+
+    printf("\033[96m>>>Generate arrays<<<\033[0m \n");
+    //init massgrid and massbins
+    start = clock();
+
+    //allocate arrays
+
+    massgrid    = malloc((nbins+1)*sizeof(flt));
+    massbins    = malloc((nbins)*sizeof(flt));
+    massmeanlog = malloc((nbins)*sizeof(flt));
+
+    init_grid_test(nbins,massmax,massmin,massgrid,massbins,massmeanlog);
+
+    end = clock();
+    elapsed_seconds = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("Init massgrid and massbins in %.3e s \n",elapsed_seconds);
+    // for (unsigned int j=0;j<nbins+1;j++){
+    //     printf("j=%d, %.15e \n",j,massgrid[j]);
+
+    // }
+
+    // exit(-1);
+    
+
+    if (save){
+        fp = fopen(path_massgrid,"w");
+        for (unsigned int j=0;j<nbins+1;j++){
+            fprintf(fp,"%.15e\n",massgrid[j]);
+        }
+        
+        fclose(fp);
+
+        fp = fopen(path_massbins,"w");
+        for (unsigned int j=0;j<nbins;j++){
+            fprintf(fp,"%.15e\n",massbins[j]);
+        }
+        
+        fclose(fp);
+
+        fp = fopen(path_massmeanlog,"w");
+        for (unsigned int j=0;j<nbins;j++){
+            fprintf(fp,"%.15e\n",massmeanlog[j]);
+        }
+        
+        fclose(fp);
+    }
+
+
+
+    start = clock();
+    if (kpol==0){
+
+        iterate_coag_k0(nbins,kpol,
+                        Q,vecnodes,vecweights,
+                        massgrid,massbins,massmeanlog,
+                        ndthydro,dthydro);
+
+    }else{
+       
+        iterate_coag(nbins,kpol,
+                    Q,vecnodes,vecweights,
+                    massgrid,massbins,massmeanlog,
+                    ndthydro,dthydro);
+    }
+    end = clock();
+    elapsed_seconds = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("\n");
+    printf("Iterate coag in %.3e s \n",elapsed_seconds);
+
+    //log simu
+    if (save){
+        fp = fopen(path_log,"a");
+        fprintf(fp,"Iterate coag in %.3e s \n",elapsed_seconds);
+        fclose(fp);
+    }
+
+
+    end_tot = clock();
+    elapsed_seconds = (double)(end - start) / CLOCKS_PER_SEC;
+
+    printf("\n");
+    printf("\033[96m>>>Compute Time<<<\033[0m \n");
+    printf("Elapsed Time : %.3e s\n", elapsed_seconds);
+
+    //log simu
+    if (save){
+        fp = fopen(path_log,"a");
+        fprintf(fp,"Elapsed Time : %.3e s\n", elapsed_seconds);
+        fclose(fp);
+    }
+
+    //free pointers
+    free(massgrid);
+    free(massbins);
+    free(massmeanlog);
+    free(vecnodes);
+    free(vecweights);
+
+
+    massgrid    = NULL;
+    massbins    = NULL;
+    massmeanlog = NULL;
+    vecnodes    = NULL;
+    vecweights  = NULL;
+
+
+    return 0;
+}

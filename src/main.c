@@ -310,7 +310,9 @@ if (*SPACING=='N'){
   
   MULTIFLUID(FillGhosts(PrimitiveVariables()));
 
-  
+#ifdef COALA
+  Coala_init();
+#endif
 #ifdef STOCKHOLM 
   FARGO_SAFE(init_stockholm()); //ALREADY IMPLEMENTED MULTIFLUID COMPATIBILITY
 #endif
@@ -417,7 +419,11 @@ if (*SPACING=='N'){
 #ifdef DUSTDIFFUSION
       FARGO_SAFE(DustDiffusion_Main(dt));
 #endif
-      
+
+#ifdef COALA
+      Coala_main(dt);
+#endif
+
       MULTIFLUID(Transport(dt));
 
       PhysicalTime+=dt;

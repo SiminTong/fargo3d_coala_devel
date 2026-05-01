@@ -97,7 +97,8 @@ void ChangeArch() {
   //-----------------------------------------------------
 
   copy_field = copy_field_cpu;
-
+  //COALA
+  //Coala = Coala_cpu;
   //MHD------------------------------------------------
   ComputeSlopes = ComputeSlopes_cpu;
   _ComputeStar = _ComputeStar_cpu;

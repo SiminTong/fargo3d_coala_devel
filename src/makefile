@@ -366,7 +366,15 @@ MAINOBJ  = LowTasks.o psys.o main.o param.o var.o usage.o   	    \
 	   nimhd_ohmic_diffusion.o				\
 	   nimhd_ohmic_diffusion_coeff.o			\
 	   compute_jx.o compute_jy.o compute_jz.o		\
-	   mesh.o ram_advect.o ram_advect_lin.o ram_compute_ustar.o ram_plm.o
+	   mesh.o ram_advect.o ram_advect_lin.o ram_compute_ustar.o ram_plm.o \
+	   coala_main.o \
+	   coala_collision_kernels.o coala_compute_coag.o coala_functions_integrands_coag.o \
+	   coala_generate_flux_intflux.o coala_generate_tabflux_tabintflux_GQ.o \
+	   coala_GQ_legendre_nodes_weights.o coala_init_grid.o coala_interface_coag.o \
+	   coala_io.o coala_L2proj_GQ.o coala_limiter.o coala_polynomials_legendre.o \
+	   coala_progress_bar.o coala_reconstruction_g.o coala_solver_DG.o coala_tension_module.o \
+	   coagflux_function_GQ.o coagintflux_function_GQ.o coala_setup.o coala_iterate_coag.o \
+	   coala_iterate_coag_k0.o \
 #-----------------------#Cuda objects---------------------------------
 GPU_OBJ  =  reduction_sum_device.o reduction_min_device.o	\
 	   	lowtasks_gpu.o 
@@ -420,7 +428,7 @@ GPU_OBJBLOCKS =  CompPresIso_gpu.o CompPresAd_gpu.o 		\
 	   nimhd_ohmic_diffusion_coeff_gpu.o			\
 	   compute_jx_gpu.o compute_jy_gpu.o compute_jz_gpu.o \
 	   compute_vmed_gpu.o ram_advect_gpu.o ram_compute_ustar_gpu.o \
-	   ram_plm_gpu.o ram_advect_lin_gpu.o
+	   ram_plm_gpu.o ram_advect_lin_gpu.o \
 #</CUDA OBJECTS>
 #---------------------------------------------------------------------
 

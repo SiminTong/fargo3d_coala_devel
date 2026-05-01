@@ -46,6 +46,9 @@ ex void SolveOrbits (PlanetarySystem *);
 ex void FindOrbitalElements (StateVector,real,int);
 ex OrbitalElements SV2OE (StateVector, real);
 
+//COALA
+void Coala_init();
+void Coala_main(real);
 
 //var.c Prototypes
 ex void InitVariables(void);
