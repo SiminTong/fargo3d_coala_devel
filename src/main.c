@@ -412,8 +412,12 @@ if (*SPACING=='N'){
       
       MULTIFLUID(Sources(dt)); //v_half is used in the R.H.S
 
-#ifdef DRAGFORCE
+#ifdef COLLISIONS
       FARGO_SAFE(Collisions(dt, 1)); // 1 --> V_temp is used.
+#endif
+
+#ifdef DRAGFORCE
+      FARGO_SAFE(DragForce(dt));
 #endif
 
 #ifdef DUSTDIFFUSION

@@ -162,6 +162,15 @@ ex void comm_gpu(int);
 
 ex void (_collisions_gpu)(real,int,int,int,int);
 
+// DragForce Prototypes
+ex void DragForce(real);
+ex void DragForce_Coeff_cpu();
+ex void DragForce_SumC_cpu(real);
+ex void DragForce_SumCV(real,int);
+ex void _DragForce_SumCV_cpu(real,int,int,int,Field*,Field*);
+ex void DragForce_UpdateVel(real,int); 
+ex void _DragForce_UpdateVel_cpu(real,int,int,int,Field*,Field*);
+
 //Monitoring Prototypes
 ex void mon_dens_cpu(void);
 ex void mon_momx_cpu(void);
@@ -572,6 +581,11 @@ ex void copy_field_gpu(Field*,Field*);
 ex void DustDiffusion_Core_gpu(real);
 ex void DustDiffusion_Coefficients_gpu();
 
+// DragForce-----------------------------------------------
+ex void DragForce_Coeff_gpu(void);
+ex void DragForce_SumC_gpu(real);
+ex void _DragForce_SumCV_gpu(real,int,int,int,Field*,Field*);
+ex void _DragForce_UpdateVel_gpu(real,int,int,int,Field*,Field*);
 //MHD-----------------------------------------------------
 
 ex void ComputeSlopes_gpu(int, int, int, Field *, Field *);

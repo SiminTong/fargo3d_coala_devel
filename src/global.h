@@ -308,6 +308,7 @@ long VtkPosition = 0;
 int Timestepcount = 0;
 int Fluidtype;
 int FluidIndex;
+real *Coeffval;
 real Min[NFLUIDS];
 Fluid *Fluids[NFLUIDS];
 
@@ -377,6 +378,11 @@ void (*copy_field)(Field*,Field*);
 //DUST DIFFUSION
 void (*DustDiffusion_Core)(real);
 void (*DustDiffusion_Coefficients)();
+//DragForce
+void (*DragForce_Coeff)();
+void (*DragForce_SumC)(real);
+void (*_DragForce_SumCV)(real,int,int,int,Field*,Field*);
+void (*_DragForce_UpdateVel)(real,int,int,int,Field*,Field*);
 //MHD..........................................
 void (*ComputeSlopes)(int,int,int,Field*,Field*);
 void (*_ComputeStar)(real,int,int,int,int,int,int,int,int,int,Field*,Field*,Field*,Field*,Field*,Field*,Field*,Field*,Field*,Field*);

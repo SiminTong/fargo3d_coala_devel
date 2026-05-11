@@ -95,6 +95,12 @@ void ChangeArch() {
   DustDiffusion_Core         = DustDiffusion_Core_cpu;
   DustDiffusion_Coefficients = DustDiffusion_Coefficients_cpu;
   //-----------------------------------------------------
+ // DRAGFORCE
+  DragForce_Coeff      = DragForce_Coeff_cpu;
+  DragForce_SumC       = DragForce_SumC_cpu;
+  _DragForce_SumCV     = _DragForce_SumCV_cpu;
+  _DragForce_UpdateVel = _DragForce_UpdateVel_cpu;
+  //-----------------------------------------------------
 
   copy_field = copy_field_cpu;
   //COALA
@@ -497,6 +503,16 @@ void ChangeArch() {
 	  DustDiffusion_Coefficients = DustDiffusion_Coefficients_gpu;
 	  printf("Dust diffusion runs on the GPU\n");
 	}
+
+    if (strcmp(name, "dragforce") == 0) {
+	if(strval[0] == 'g'){
+	  DragForce_Coeff      =  DragForce_Coeff_gpu;
+	  DragForce_SumC       = DragForce_SumC_gpu;
+	  _DragForce_SumCV     = _DragForce_SumCV_gpu;
+	  _DragForce_UpdateVel = _DragForce_UpdateVel_gpu;
+	  masterprint("dragforce runs on the GPU\n");
+	}
+      }
       }
       if (strcmp(name, "communications") == 0) {
 	if(strval[0] == 'g'){

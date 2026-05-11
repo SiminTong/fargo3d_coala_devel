@@ -23,7 +23,7 @@ void Coala_init(){
     massmeanlog = malloc((nbins)*sizeof(flt));
 
     unsigned int kernel = 3;
-    flt rhograin = RHOGRAIN/(MSTAR_CGS/(R0_CGS*R0_CGS*R0_CGS))*(MSTAR/(R0*R0*R0));
+    flt rhograin = RHOSOLID/(MSTAR_CGS/(R0_CGS*R0_CGS*R0_CGS))*(MSTAR/(R0*R0*R0));
     flt K0              = M_PI*pow((4./3.)*M_PI*rhograin,-2./3.);
     unsigned int Q      = 5;
     int kpol            = 0;

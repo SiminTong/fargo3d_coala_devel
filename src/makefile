@@ -375,6 +375,8 @@ MAINOBJ  = LowTasks.o psys.o main.o param.o var.o usage.o   	    \
 	   coala_progress_bar.o coala_reconstruction_g.o coala_solver_DG.o coala_tension_module.o \
 	   coagflux_function_GQ.o coagintflux_function_GQ.o coala_setup.o coala_iterate_coag.o \
 	   coala_iterate_coag_k0.o \
+	   dragforce.o dragforce_sumc.o dragforce_sumcv.o       \
+	   dragforce_updatevel.o dragforce_coeff.o  \
 #-----------------------#Cuda objects---------------------------------
 GPU_OBJ  =  reduction_sum_device.o reduction_min_device.o	\
 	   	lowtasks_gpu.o 
@@ -429,6 +431,9 @@ GPU_OBJBLOCKS =  CompPresIso_gpu.o CompPresAd_gpu.o 		\
 	   compute_jx_gpu.o compute_jy_gpu.o compute_jz_gpu.o \
 	   compute_vmed_gpu.o ram_advect_gpu.o ram_compute_ustar_gpu.o \
 	   ram_plm_gpu.o ram_advect_lin_gpu.o \
+	   dragforce_sumc_gpu.o dragforce_sumcv_gpu.o           \
+       dragforce_updatevel_gpu.o dragforce_coeff_gpu.o  \
+	   thermalaccomodation_coeff_gpu.o \
 #</CUDA OBJECTS>
 #---------------------------------------------------------------------
 
