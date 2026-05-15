@@ -77,6 +77,8 @@ void _CondInit(int id) {
 	  vphi[l] = omega*r;
 	  vr[l]   = 0.0;
 	  cs[l]   = 0.0;
+    //lets sotre the stokes (without the gas density) in the field cs
+    cs[l]   = 1/(2.*Coeffval[1]/Coeffval[2]/M_PI);
 	}
 	
 	vphi[l] -= OMEGAFRAME*r;

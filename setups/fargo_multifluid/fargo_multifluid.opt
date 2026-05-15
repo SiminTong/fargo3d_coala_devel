@@ -40,7 +40,7 @@ FARGO_OPT += -DDUSTSIZE
 #FARGO_OPT += -DDUSTDIFFUSION
 
 #Dust growth
-#FARGO_OPT += -DCOALA    
+FARGO_OPT += -DCOALA    
 
 
 #Damping conditions

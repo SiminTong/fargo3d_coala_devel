@@ -668,7 +668,7 @@ void WriteOutputs(int type) {
   if (WRITEDENSITY)
     __WriteField(Density, TimeStep);
   if (WRITEENERGY)
-    if(Fluidtype != DUST) __WriteField(Energy, TimeStep);
+    __WriteField(Energy, TimeStep);
 #ifdef MHD //MHD is 3D.
   if(Fluidtype == GAS){
     if (WRITEDIVERGENCE)
