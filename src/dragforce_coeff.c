@@ -66,7 +66,6 @@ void DragForce_Coeff_cpu () {
 	ll = l;
 
 	
-#ifdef STOKESNUMBER
 #ifdef SHEARINGBOX
 	omega = OMEGAFRAME;
 #endif
@@ -79,6 +78,8 @@ void DragForce_Coeff_cpu () {
 #ifdef SPHERICAL
   omega = sqrt(G*MSTAR/ymed(j)/ymed(j)/ymed(j));
 #endif
+
+#ifdef STOKESNUMBER
 	coeff[ll] = omega;
 #endif
 	
@@ -89,7 +90,11 @@ void DragForce_Coeff_cpu () {
 #ifdef ISOTHERMAL
 	cs = energy_gas[ll];
 #endif
+#ifdef Z
 	coeff[ll] = dens_gas[ll]*cs;
+#else
+  coeff[ll] = dens_gas[ll]*sqrt(2*M_PI)*omega;
+#endif
 #endif
 	
 //<\#>

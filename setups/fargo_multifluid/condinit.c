@@ -46,10 +46,11 @@ void _CondInit(int id) {
    Coeffval[0]   = 1.0/stokes[id-1];
 #endif
 #ifdef DUSTSIZE
-    Coeffval[1]   = 1.0/(stokes[id-1]*R0/R0_CGS);    
+    Coeffval[1]   = 1.0/(stokes[id-1]*R0/R0_CGS);  
     Coeffval[2]   = RHOSOLID/(MSTAR_CGS/(R0_CGS*R0_CGS*R0_CGS))*(MSTAR/(R0*R0*R0));
+     if(CPU_Master) printf("Stokes at r=1: %f  \n", 1/(2.*SIGMA0*Coeffval[1]/Coeffval[2]/M_PI));  
 #endif
-    if(CPU_Master) printf("Ts %1.16f \t eps %1.16f \n", stokes[id-1], epsilons[id-1]);
+    if(CPU_Master) printf("size (cm) %1.16f \t eps %1.16f \n", stokes[id-1], epsilons[id-1]);
   }
 #endif
   i = j = k = 0;
