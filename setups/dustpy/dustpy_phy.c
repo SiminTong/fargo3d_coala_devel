@@ -9,7 +9,7 @@
 //#define G  6.674299999999999e-08 // gravitational constants in cgs
 //#define msun 1.988409870698051e+33 // solar mass
 #define sigma_H2_code 3.31e-45 // the cross section for molecular hydrogen in code units (considering 1 length unit = distance to jupiter)
-
+//TODO: change! 1 length unit = 50.2 au
 //define a structure for easier computation of v_visc and pressure_eta
 typedef struct {
     int l_left, l_right;
