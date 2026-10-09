@@ -60,7 +60,8 @@ void _CondInit(int id) {
       for (i=0; i<Nx+2*NGHX; i++) {
 	
 	r     = Ymed(j);
-	omega = sqrt(G*MSTAR/r/r/r);                       //Keplerian frequency
+	omega = sqrt(G*MSTAR/r/r/r);//Keplerian frequency
+  vk    = r * omega;                       
 	rhog  = SIGMA0*pow(r/R0,-SIGMASLOPE);              //Gas surface density
         rhod  = rhog*EPSILON;                              //Dust surface density
 
