@@ -2,13 +2,13 @@
 #----------------------------------
 
 Density:
-	Ymin: KEPLERIAN2DDENS
-	Ymax: KEPLERIAN2DDENS
+	Ymin:  POWERLAW
+	Ymax:  POWERLAW
 
 Vx:
-	Ymin: KEPLERIAN2DVAZIM
-	Ymax: KEPLERIAN2DVAZIM
+	Ymin:  POWERLAW
+	Ymax:  POWERLAW
 
 Vy:
-	Ymin: ANTISYMMETRIC
-	Ymax: ANTISYMMETRIC
+	Ymin:  POWERLAW
+	Ymax:  POWERLAW
