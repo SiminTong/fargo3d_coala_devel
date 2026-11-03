@@ -18,14 +18,14 @@ code.
 #define    MU0_SF  1.0
 
 #define      G_MKS  6.674e-11
-#define  MSTAR_MKS  1.9891e30
-#define     R0_MKS  (5.2*1.49597871e11)
-#define   R_MU_MKS  3460.0
+#define  MSTAR_MKS  1.9891e30 //1 solar mass
+#define     R0_MKS  (5.2*1.49597871e11) // this is 5.2 m * au/m, which is 5.2 au (distance to Jupiter!)
+#define   R_MU_MKS  3460.0 // ideal gas constant divided by the mean molecular weight P= rho * R/mu * T
 #define    MU0_MKS  1.25663706143591e-6   //B in Tesla
 
 #define      G_CGS  6.674e-8
 #define  MSTAR_CGS  1.9891e33
-#define     R0_CGS  (50.2*1.49597871e13)
+#define     R0_CGS  (50.2*1.49597871e13) // this is 50.2 cm * au/cm, which is 50.2 au/
 #define   R_MU_CGS  36149835.0
 #define    MU0_CGS  12.5663706143591   //B in Gauss
 

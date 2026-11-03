@@ -37,6 +37,8 @@ FARGO_OPT += -DDUSTSIZE
 #Dust growth
 FARGO_OPT += -DCOALA    
 
+#DustPy Physics
+FARGO_OPT += -DALPHAVISCOSITY
 
 #Damping conditions
 FARGO_OPT += -DSTOCKHOLM

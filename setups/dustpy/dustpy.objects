@@ -1,0 +1,2 @@
+MAINOBJ += dustpy_phy.o
+dustpy_phy.o coala_main.o: ../setups/dustpy/dustpy_phy.h

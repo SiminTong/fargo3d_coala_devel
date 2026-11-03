@@ -1,24 +1,17 @@
 
 #include "fargo3d.h"
+#include "dustpy_phy.h"
 
-//TODO: check with astropy
 #define kB_cgs 1.380649e-16 // Boltzmman constant
 //#define mp_cgs 1.67262192369e-24  // proton mass in g 
-#define mu  2.3 // mean molecular weight in units of proton mass
-#define mu_code 1.934e-57 // mean molecular weight in code unit (m_mu=2.3m_p)
+//#define mu  2.3 // mean molecular weight in units of proton mass
+//#define mu_code 1.934e-57 // mean molecular weight in code unit (m_mu=2.3m_p)
+#define mol_mass_cgs  (kB_cgs / R_MU_CGS)  //mean molecular weight (cgs)
+#define mol_mass_code  (mol_mass_cgs * MSTAR / MSTAR_CGS) //mean molecular weight (cgs)
 //#define G  6.674299999999999e-08 // gravitational constants in cgs
 //#define msun 1.988409870698051e+33 // solar mass
-#define sigma_H2_code 3.31e-45 // the cross section for molecular hydrogen in code units (considering 1 length unit = distance to jupiter)
-//TODO: change! 1 length unit = 50.2 au
+#define sigma_H2_code (2e-15 * (R0/R0_CGS) * (R0/R0_CGS)) // the cross section for molecular hydrogen in code units (considering 1 length unit = distance to jupiter)
 //define a structure for easier computation of v_visc and pressure_eta
-typedef struct {
-    int l_left, l_right;
-
-    real r_left, r, r_right;
-    real r_face_left, r_face_right;
-    real omega_r_left, omega_r, omega_r_right;
-
-} RadGeo;
 
 
 RadGeo Read_Radial_Geometry(int i, int j, int k){
@@ -38,7 +31,7 @@ RadGeo Read_Radial_Geometry(int i, int j, int k){
     g.r_right= Ymed(j+1);
 
     g.r_face_left = Ymin(j);
-    g.r_face_right= Ymax(j);
+    g.r_face_right= Ymin(j+1);
 
     g.omega_r_left  = sqrt(G*MSTAR/g.r_left/g.r_left/g.r_left);
     g.omega_r       = sqrt(G*MSTAR/g.r/g.r/g.r);
@@ -78,7 +71,7 @@ real Gas_Temperature(real soundspeed_code){
     return gas_temp_code;
 }
 
-real Stokes_Number(real s_cgs, real sigma_g_code){
+real Stokes_Number(real s_cgs, real sigma_g_code, real rhograin){
 
     real s_code;
     real St;
@@ -118,11 +111,11 @@ real Dust_Scaleheight(real st, real hg_code, real turb_alpha, real cs_code, real
     return hd_code;
 }
 
-real Volume_Rho_Midplane(real sigma_g, real hg_code){
+real Volume_Rho_Midplane(real sigma_g_code, real hg_code){
 
-    real rho_midplane, hg_code;
+    real rho_midplane;
 
-    rho_midplane = sigma_g / (sqrt(2.0*M_PI) * hg_code);
+    rho_midplane = sigma_g_code / (sqrt(2.0*M_PI) * hg_code);
 
     return rho_midplane;
 
@@ -130,29 +123,38 @@ real Volume_Rho_Midplane(real sigma_g, real hg_code){
 
 real Pgas(real rho_g_mid, real cs_code){
 
-    real pgas
+    real pgas;
 
     pgas = rho_g_mid * pow(cs_code,2);
 
     return pgas;
 }
 
-real Pressure_Eta(real *sigma, real *cs, real hg_code, RadGeo g){
+real Pressure_Eta(real *sigma_g_code, real *cs, real hg_code, RadGeo g, int idx){
 
     real pgas_left, pgas, pgas_right;
-    real pgas_left_face, pgas_right_face;
-    real dlogp_dlogr, eta; 
+    real hg_left, hg_right;
+    real rho_mid_left, rho_mid, rho_mid_right;
+    real pgas_left_face,pgas_right_face;
+    real dpdr, eta; 
 
-    pgas_left = Pgas(sigma[g.l_left], g.omega_r_left, cs[g.l_left]);
-    pgas      = Pgas(sigma[l], g.omega_r, cs[l]);
-    pgas_right= Pgas(sigma[g.l_right], g.omega_r_right, cs[g.l_right]);
+    hg_left  = Gas_Scaleheight(cs[g.l_left], g.omega_r_left);
+    hg_right = Gas_Scaleheight(cs[g.l_right], g.omega_r_right);
+    
+    rho_mid_left = Volume_Rho_Midplane(sigma_g_code[g.l_left], hg_left);
+    rho_mid = Volume_Rho_Midplane(sigma_g_code[idx], hg_code);
+    rho_mid_right=Volume_Rho_Midplane(sigma_g_code[g.l_right], hg_right);
+
+    pgas_left = Pgas(rho_mid_left, cs[g.l_left]);
+    pgas      = Pgas(rho_mid, cs[idx]);
+    pgas_right= Pgas(rho_mid_right, cs[g.l_right]);
 
     pgas_left_face = interp(g.r_left, g.r, pgas_left, pgas, g.r_face_left);
     pgas_right_face= interp(g.r, g.r_right, pgas, pgas_right, g.r_face_right);
 
-    dlogp_dlogr = (log(pgas_right_face) - log(pgas_left_face)) / (log(g.r_face_right)-log(g.r_face_left));
+    dpdr = (pgas_right_face - pgas_left_face) / (g.r_face_right-g.r_face_left);
     
-    eta = -0.50 * pow(hg_code/g.r, 2) * dlogp_dlogr; 
+    eta = -0.50 * pow(hg_code, 2.0) * dpdr / (g.r*pgas); 
 
     return eta;
 
@@ -160,7 +162,7 @@ real Pressure_Eta(real *sigma, real *cs, real hg_code, RadGeo g){
 
 real Vel_Settle(real st, real hd_code, real cs_code, real omega_code, real turb_alpha){
 
-    real st, small; // st for stokes number
+    real small;
     real v_settle_code;
 
     small = fmin(0.5, st);
@@ -169,23 +171,23 @@ real Vel_Settle(real st, real hd_code, real cs_code, real omega_code, real turb_
     return v_settle_code;
 }
 
-real Vel_Visc(real *sigma, real *cs, real turb_alpha, RadGeo g){
+real Vel_Visc(real *sigma_g_code, real *cs, real turb_alpha, RadGeo g, int idx){
 
     real arg_left, arg, arg_right;
     real arg_left_face, arg_right_face;
     real grad_arg, v_visc;
 
-    arg_left = sigma[g.l_left] * sqrt(g.r_left) * Gas_nu(turb_alpha, cs[g.l_left], g.omega_r_left);
-    arg      = sigma[l] * sqrt(g.r) * Gas_nu(turb_alpha, cs[l], g.omega_r);
-    arg_right= sigma[g.l_right] * sqrt(g.r_right) * Gas_nu(turb_alpha, cs[g.l_right], g.omega_r_right);
+    arg_left = sigma_g_code[g.l_left] * sqrt(g.r_left) * Gas_Nu(turb_alpha, cs[g.l_left], g.omega_r_left);
+    arg      = sigma_g_code[idx] * sqrt(g.r) * Gas_Nu(turb_alpha, cs[idx], g.omega_r);
+    arg_right= sigma_g_code[g.l_right] * sqrt(g.r_right) * Gas_Nu(turb_alpha, cs[g.l_right], g.omega_r_right);
 
     // the value at the face cell on the left and right of the center cell l
     arg_left_face = interp(g.r_left, g.r, arg_left, arg, g.r_face_left);
     arg_right_face = interp(g.r, g.r_right, arg, arg_right, g.r_face_right);
 
-    grad_arg = (arg_right_face - arg_left_face) / (g.r_face_right-g.r_face_right);
+    grad_arg = (arg_right_face - arg_left_face) / (g.r_face_right-g.r_face_left);
 
-    v_visc = -3.0 / (sigma_g[l] * sqrt(g.r)) * grad_arg;
+    v_visc = -3.0 / (sigma_g_code[idx] * sqrt(g.r)) * grad_arg;
 
     return v_visc;
 
@@ -218,7 +220,7 @@ real Vel_Dust_Rad(real v_gas_r, real v_drift_max, real vk, real A, real B, real 
 
     real v_dust_r; 
 
-    v_dust_r = (v_gas_r  + 2 * v_drift_max * st) / (1 + st*st);
+    v_dust_r = (v_gas_r  + 2.0 * v_drift_max * st) / (1.0 + st*st);
 
     return v_dust_r;
 
@@ -239,6 +241,8 @@ real Rel_Vel_Brownian(real s1_cgs, real s2_cgs, real cs_code) {
 
     dv_brown_code = sqrt(8.0 * kB_code * T_gas_code/M_PI * (1.0/m1_code+1.0/m2_code));
 
+    dv_brown_code = fmin(dv_brown_code, cs_code);
+
     return dv_brown_code;
 }
 
@@ -256,10 +260,10 @@ real Rel_Vel_Rad(real st1 , real st2, real v_gas_r, real v_drift_max){
 
     real rel_vel_rad;
 
-    rel_vel_rad = v_gas_r * (1 / (1 + pow(st1, 2)) - 1 / (1 + pow(st2, 2)))
-    + 2 * v_drift_max * (st1 / (1 + pow(st1, 2)) - st2 / (1 + pow(st2, 2)));
+    rel_vel_rad = v_gas_r * (1.0 / (1.0 + pow(st1, 2.0)) - 1.0 / (1.0 + pow(st2, 2.0)))
+    + 2 * v_drift_max * (st1 / (1.0 + pow(st1, 2.0)) - st2 / (1.0 + pow(st2, 2.0)));
 
-    return rel_vel_rad
+    return rel_vel_rad;
    
 }
 
@@ -267,9 +271,9 @@ real Rel_Vel_Rad(real st1 , real st2, real v_gas_r, real v_drift_max){
 // azimuthal velocity offset (after cancelling out the keplerian velocity and the frame velocity)
 real Vel_Dust_Azi_Offset(real v_drift_max, real st){
 
-    real st, v_dust_a;
+    real v_dust_a;
 
-    v_dust_a = v_drift_max / (1+ st*st);
+    v_dust_a = v_drift_max / (1.0+ st*st);
 
     return v_dust_a;
 }
@@ -278,7 +282,7 @@ real Rel_Vel_Azi(real st1, real st2, real v_drift_max){
 
     real rel_vel_azi;
 
-    rel_vel_azi = v_drift_max * (1 / pow(st1, 2) - 1 / pow(st2, 2));
+    rel_vel_azi = v_drift_max * (1.0 / (1.0+pow(st1, 2.0)) - 1.0 / (1.0 + pow(st2, 2.0)));
 
     return rel_vel_azi;
 }
@@ -294,8 +298,7 @@ real Rel_Vel_Turb(real omega_code, real sigma_g_code, real cs_code, real turb_al
     
     real yap1inv  = 1.0/ (1.0 + ya);
     real OmkInv   = 1.0 / omega_code;
-    //TODO: check the definition of sigma_H2_code!
-    real Re       = 0.5 * turb_alpha * sigma_g_code * sigma_H2_code / mu_code;
+    real Re       = 0.5 * turb_alpha * sigma_g_code * sigma_H2_code / mol_mass_code;
     real ReInvSqrt= sqrt(1.0/Re);
 
     real StL, StS, tauL, tauS, eps;
@@ -306,7 +309,7 @@ real Rel_Vel_Turb(real omega_code, real sigma_g_code, real cs_code, real turb_al
     vn            = sqrt(turb_alpha) * cs_code;
     vs            = pow(Re, -0.25) * vn;
     ts            = OmkInv * ReInvSqrt;
-    vg2           = 1.5 * pow(vn,2);
+    vg2           = 1.5 * pow(vn, 2.0);
     
     StL = fmax(st1, st2);
     StS = fmin(st1, st2);

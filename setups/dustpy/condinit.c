@@ -18,8 +18,10 @@ void _CondInit(int id) {
   real sq = SQ;
   real slope;
   // Stokes numbers                                                                      
-  real smax = TSMAX;
-  real smin = TSMIN;
+  //real smax = TSMAX;
+  //real smin = TSMIN;
+  real smax = SMAX;
+  real smin = SMIN; // dust size
   real ds   = (log(smax)-log(smin))/(NFLUIDS-1);
   for(int n=0;n<NFLUIDS;n++){
     stokes_plus[n] = smin*exp(ds*n);
@@ -37,7 +39,8 @@ void _CondInit(int id) {
       epsilons[n] *= EPSILON/log(smax/smin);
     }
     stokes[n] = stokes_plus[n+1];
-    if( NFLUIDS == 2) stokes[n] = TSMAX;
+    //if( NFLUIDS == 2) stokes[n] = TSMAX;
+    if( NFLUIDS == 2) stokes[n] = SMAX;
   }
 
 #ifdef DRAGFORCE

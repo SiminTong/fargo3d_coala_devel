@@ -11,6 +11,7 @@
 #include "coala_init_grid.h"
 #include "coala_polynomials_legendre.h"
 #include "coala_interface_coag.h"
+#include "dustpy_phy.h"
 //<\INCLUDES>
 
 
@@ -58,6 +59,7 @@ void Coala_main(real dt){
 
 //<USER_DEFINED>
    real *densgas;
+   real *cs;
    real *densities[NFLUIDS-1];
    real *velocitiesx[NFLUIDS-1];
    real *velocitiesy[NFLUIDS-1];
@@ -67,11 +69,17 @@ void Coala_main(real dt){
 
    int ii;
 
+   INPUT(Fluids[0]->Density);
    densgas = Fluids[0]->Density->field_cpu;
+
+   INPUT(Fluids[0]->Energy);
+   cs = Fluids[0]->Energy->field_cpu;
+
 
    for (ii=1; ii<NFLUIDS; ii++) {
 
     INPUT(Fluids[ii]->Density);
+    //OUTPUT(Fluids[ii]->Density);
     densities[ii-1]  = Fluids[ii]->Density->field_cpu;
     
     INPUT(Fluids[ii]->Energy);
@@ -110,15 +118,27 @@ void Coala_main(real dt){
   int ll;
   int o;
   int p;
+  RadGeo g;
   real hdust;
   real stokesp;
   real stokeso;
+  real h_o, h_p;
+  real K_mod;
+  real hg, eta, visc, vk;
+  real vgas, vdrift_max;
+  real dv_brown, dv_rad, dv_azi, dv_settle, dv_turb;
+  real dv_tot;
   real dvr;
   flt rhodust[NFLUIDS-1];
   flt invsize[NFLUIDS-1];
   flt rhos[NFLUIDS-1];
   flt new_rhodust[NFLUIDS-1];
   flt dv[(NFLUIDS-1)*(NFLUIDS-1)];  
+
+
+  real sizes[NFLUIDS-1];
+  real H[NFLUIDS-1];
+  real vsettle[NFLUIDS-1];
 //<\INTERNAL>
 
 //<MAIN_LOOP>
@@ -137,26 +157,58 @@ void Coala_main(real dt){
 //<#>
 
 	ll = l;
+  
+    g = Read_Radial_Geometry(i, j, k);
 
-    //fill arrays with densities and relative velocity        
+    hg  = Gas_Scaleheight(cs[ll], g.omega_r);
+    eta = Pressure_Eta(densgas, cs, hg, g, ll);
+    visc= Vel_Visc(densgas, cs, ALPHA, g, ll);
+    vk  = g.r * g.omega_r;
+
+
+    vgas       = Vel_Gas_Rad(visc, eta, vk, 1.0, 0.0); //no dust back-reaction
+    vdrift_max = v_drift_max(visc, eta, 1.0, 0.0, vk);
+
+
     for (o=0; o<NFLUIDS-1; o++) {
-      
-      //surface density to volumetric density
-      hdust      = MIN(1.,sqrt(ALPHA/(ALPHA + stokes[o][ll])));
-      rhodust[o] = densities[o][ll]/(sqrt(2*M_PI)*ASPECTRATIO*ymed(j)*hdust);    
+      sizes[o] = SMIN * pow(SMAX/SMIN, (o+1.0)/nbins);
+      H[o] = Dust_Scaleheight(stokes[o][ll], hg, ALPHA, cs[ll], g.omega_r);
+      vsettle[o] = Vel_Settle(stokes[o][ll], H[o], cs[ll], g.omega_r, ALPHA);
 
+    }
+
+    //fill arrays with densities and relative velocity      
+    for (o=0; o<NFLUIDS-1; o++) {
+
+      //surface density to volumetric density
+      //hdust      = MIN(1.,sqrt(ALPHA/(ALPHA + stokes[o][ll])));
+      //rhodust[o] = densities[o][ll]/(sqrt(2*M_PI)*ASPECTRATIO*ymed(j)*hdust);
+      rhodust[o] = densities[o][ll];    
+      
+      //Question: or still use the surface density but change the collision kernel
+      // (similar to the one in dustpy?)
         for (p=0; p<NFLUIDS-1; p++) {
-            dvr = 0.;
+
+          dv_brown = Rel_Vel_Brownian(sizes[o], sizes[p], cs[ll]);
+          dv_rad   = Rel_Vel_Rad(stokes[o][ll], stokes[p][ll], vgas, vdrift_max);
+          dv_azi   = Rel_Vel_Azi(stokes[o][ll], stokes[p][ll], vdrift_max);
+          dv_settle= Rel_Vel_Settle(vsettle[o], vsettle[p]);
+          dv_turb  = Rel_Vel_Turb(g.omega_r, densgas[ll], cs[ll], ALPHA, stokes[o][ll], stokes[p][ll]);
+
+          dv_tot= Rel_Vel_Tot(dv_azi, dv_brown, dv_rad, dv_turb, dv_settle);
+          K_mod = sqrt(2.0 * M_PI * (pow(H[o], 2.0) + pow(H[p], 2.0))); // modified kernal constants for comparison with dustpy
+
+          //dvr = 0.;
     #ifdef X
-            dvr += (velocitiesx[o][ll]-velocitiesx[p][ll])*(velocitiesx[o][ll]-velocitiesx[p][ll]);
+    //        dvr += (velocitiesx[o][ll]-velocitiesx[p][ll])*(velocitiesx[o][ll]-velocitiesx[p][ll]);
     #endif
     #ifdef Y
-            dvr += (velocitiesy[o][ll]-velocitiesy[p][ll])*(velocitiesy[o][ll]-velocitiesy[p][ll]);
+    //        dvr += (velocitiesy[o][ll]-velocitiesy[p][ll])*(velocitiesy[o][ll]-velocitiesy[p][ll]);
     #endif
     #ifdef Z
-            dvr += (velocitiesz[o][ll]-velocitiesz[p][ll])*(velocitiesz[o][ll]-velocitiesz[p][ll]);
+    //        dvr += (velocitiesz[o][ll]-velocitiesz[p][ll])*(velocitiesz[o][ll]-velocitiesz[p][ll]);
     #endif
-            dv[p+o*(NFLUIDS-1)] = pow(dvr, 0.5);
+            dv[p+o*(NFLUIDS-1)] = dv_tot / K_mod;
         }
     }
 
@@ -165,9 +217,10 @@ void Coala_main(real dt){
 
     // Update density with coala solution
     for (o=0; o<NFLUIDS-1; o++) {
-        hdust      = MIN(1.,sqrt(ALPHA/(ALPHA + stokes[o][ll])));
-       densities[o][ll] = new_rhodust[o]*(sqrt(2*M_PI)*ASPECTRATIO*ymed(j)*hdust);
-	}
+    //    hdust      = MIN(1.,sqrt(ALPHA/(ALPHA + stokes[o][ll])));
+    //   densities[o][ll] = new_rhodust[o]*(sqrt(2*M_PI)*ASPECTRATIO*ymed(j)*hdust);
+        densities[o][ll] = new_rhodust[o];
+  }
 //<\#>
 #ifdef X
       }
